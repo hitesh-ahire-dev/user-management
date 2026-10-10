@@ -15,9 +15,10 @@ A production-style Spring Boot REST API for CRUD operations on users.
 8. [Sample Requests & Responses](#sample-requests--responses)
 9. [Running Tests](#running-tests)
 10. [Common Troubleshooting](#common-troubleshooting)
-11. [Cloud Deployment](#cloud-deployment)
-12. [Security Considerations](#security-considerations)
-13. [Production Database Migrations (Flyway)](#production-database-migrations)
+11. [Cloud Deployment — Render.com](#cloud-deployment--rendercom)
+12. [Cloud Deployment — Railway.com](#cloud-deployment--railwaycom)
+13. [Security Considerations](#security-considerations)
+14. [Production Database Migrations (Flyway)](#production-database-migrations)
 
 ---
 
@@ -495,14 +496,74 @@ curl -X POST https://YOUR_APP.onrender.com/api/users \
 
 ---
 
+## Cloud Deployment — Railway.com
+
+Railway builds and runs the Spring Boot jar directly from your GitHub repository.
+Deployment is driven by `railway.json` at the project root.
+
+---
+
+### Step 1 — Add a MySQL database service
+
+1. Open your Railway project dashboard.
+2. Click **New** → **Database** → **Add MySQL**.
+3. Railway creates a MySQL service and automatically injects these env vars into every service in the same project:
+
+   | Variable | Description |
+   |----------|-------------|
+   | `MYSQLHOST` | MySQL host |
+   | `MYSQLPORT` | MySQL port |
+   | `MYSQLDATABASE` | Database name |
+   | `MYSQLUSER` | Username |
+   | `MYSQLPASSWORD` | Password |
+
+---
+
+### Step 2 — Add the Spring Boot web service
+
+1. Click **New** → **GitHub Repo** → connect your repository.
+2. Railway auto-detects `railway.json` and sets:
+   - **Build**: `mvn clean package -DskipTests`
+   - **Start**: `java -Xmx256m -jar target/user-management-1.0.0.jar`
+
+---
+
+### Step 3 — Set the Spring profile env var
+
+In your web service → **Variables** tab, add:
+
+| Key | Value |
+|-----|-------|
+| `SPRING_PROFILES_ACTIVE` | `railway` |
+
+> Railway auto-injects all `MYSQL*` variables from the linked database service — **no other variables needed**.
+
+---
+
+### Step 4 — Deploy and verify
+
+Railway deploys automatically on every push to `main`.
+
+```bash
+# Replace YOUR_APP with your Railway public URL
+curl https://YOUR_APP.railway.app/actuator/health
+# → {"status":"UP","components":{"db":{"status":"UP"}}}
+
+curl -X POST https://YOUR_APP.railway.app/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"firstName":"Jane","lastName":"Doe","email":"jane@example.com"}'
+```
+
+---
+
 ## Security Considerations
 
 - **Never commit** `.env` or real credentials to version control.
-- Always use Render's **Secret environment variables** — not plain env vars in `render.yaml`.
+- Always use the platform's secret environment variables (Render dashboard / Railway Variables tab).
 - Set `spring.jpa.hibernate.ddl-auto=validate` in production; use **Flyway** for schema changes (see below).
-- Enable **SSL** on your MySQL connection string (`sslMode=VERIFY_IDENTITY` for PlanetScale).
-- Restrict the Actuator: only `/health` and `/info` are exposed; `show-details: never` is set on the render profile.
-- Render provides **HTTPS** automatically via its edge — your app receives plain HTTP on port 8080 internally.
+- Enable **SSL** on your MySQL connection string when using external providers (`sslMode=VERIFY_IDENTITY` for PlanetScale).
+- Restrict the Actuator: only `/health` and `/info` are exposed; `show-details: never` is set on cloud profiles.
+- Both Render and Railway provide **HTTPS** automatically via their edge — your app receives plain HTTP internally.
 
 ---
 
