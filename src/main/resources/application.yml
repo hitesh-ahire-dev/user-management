@@ -1,0 +1,41 @@
+# ---------------------------------------------------------------------------
+# Common configuration (applies to every profile).
+# The active profile is chosen via SPRING_PROFILES_ACTIVE (defaults to "local").
+# ---------------------------------------------------------------------------
+spring:
+  application:
+    name: user-management
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+
+# Actuator: expose only the endpoints we need for health checks.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: User Management REST API
+    description: CRUD API for managing users
+    version: 1.0.0
+
+# Default logging levels (can be overridden per profile / env var).
+logging:
+  level:
+    root: INFO
+    com.example.usermanagement: INFO

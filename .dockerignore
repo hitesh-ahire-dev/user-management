@@ -1,0 +1,8 @@
+# Exclude build output and IDE files from the Docker build context.
+target/
+.idea/
+*.iml
+*.DS_Store
+.env
+.git/
+README.md

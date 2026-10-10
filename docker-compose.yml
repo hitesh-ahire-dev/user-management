@@ -1,0 +1,38 @@
+version: "3.9"
+
+# ---------------------------------------------------------------------------
+# LOCAL DEVELOPMENT only — starts a MySQL 8 instance so you can run the
+# Spring Boot app with `mvn spring-boot:run` (no Docker image needed).
+#
+# Usage:
+#   docker compose up -d        # start MySQL in the background
+#   mvn spring-boot:run         # run the app on localhost:8080
+#   docker compose down         # stop MySQL
+#   docker compose down -v      # stop and wipe the data volume
+# ---------------------------------------------------------------------------
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: user-management-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-user_management}
+      MYSQL_USER: ${MYSQL_USER:-appuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  mysql_data:
+    name: user_management_mysql_data

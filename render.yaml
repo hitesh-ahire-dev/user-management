@@ -1,0 +1,53 @@
+# ---------------------------------------------------------------------------
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# This file defines the User Management service on Render.
+# Render builds and runs the Spring Boot jar directly (no Docker needed).
+#
+# HOW TO USE:
+#   1. Push this repo to GitHub / GitLab.
+#   2. Connect the repo in the Render dashboard → "New Blueprint".
+#   3. Set the secret environment variables (DB_URL, DB_USERNAME, DB_PASSWORD)
+#      in the Render dashboard under "Environment".
+# ---------------------------------------------------------------------------
+
+services:
+  - type: web
+    name: user-management
+    runtime: java
+    plan: free                  # free tier spins down after 15 min idle
+
+    # Render uses JDK 17 by default; pin explicitly for clarity.
+    javaVersion: 17
+
+    # Maven build (tests are skipped — they run in CI, not on Render build).
+    buildCommand: mvn clean package -DskipTests
+
+    # Start the packaged jar.
+    startCommand: java -Xmx256m -jar target/user-management-1.0.0.jar
+
+    # Render pings this path to decide if the deploy is healthy.
+    healthCheckPath: /actuator/health
+
+    # Auto-deploy whenever you push to the main branch.
+    autoDeploy: true
+
+    envVars:
+      # Switch to the render Spring profile.
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
+
+      # These three are SECRET — set them in the Render dashboard, not here.
+      # Use an external MySQL provider (PlanetScale / Aiven / Railway).
+      - key: DB_URL
+        sync: false       # "sync: false" means Render will ask you to fill it in
+
+      - key: DB_USERNAME
+        sync: false
+
+      - key: DB_PASSWORD
+        sync: false
+
+      # Optional: tune JVM memory to fit Render's free-tier 512 MB RAM.
+      - key: JAVA_OPTS
+        value: "-Xmx256m -Xms128m"

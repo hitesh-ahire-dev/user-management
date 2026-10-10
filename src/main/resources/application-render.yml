@@ -1,0 +1,38 @@
+# ---------------------------------------------------------------------------
+# RENDER profile — used when SPRING_PROFILES_ACTIVE=render on Render.com.
+#
+# All sensitive values come from environment variables set in the Render
+# dashboard (Environment tab). Nothing is hardcoded here.
+#
+# External MySQL providers that work well with Render (free tiers available):
+#   • PlanetScale   — https://planetscale.com  (serverless MySQL, generous free tier)
+#   • Aiven         — https://aiven.io         (managed MySQL, free 30-day trial → paid)
+#   • Railway       — https://railway.app       (MySQL, small free allowance)
+#
+# Set DB_URL to the JDBC URL from your chosen provider.
+# Example PlanetScale JDBC URL:
+#   jdbc:mysql://aws.connect.psdb.cloud/user_management?sslMode=VERIFY_IDENTITY&...
+# ---------------------------------------------------------------------------
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+# Expose /actuator/health for Render's health-check ping.
+management:
+  endpoint:
+    health:
+      show-details: never   # keep internals private on public cloud
+
+logging:
+  level:
+    com.example.usermanagement: INFO
